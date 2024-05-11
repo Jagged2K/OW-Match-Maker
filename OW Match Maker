@@ -131,4 +131,4 @@ async def default_role(ctx, role):
     else:
         await ctx.send('Invalid role. Please choose from main-tank, off-tank, dps, or support.')
 
-bot.run('D')
+bot.run('MTIzODYzNDU0NjAxMTA0NTg4OA.Gt24tF.GYtqvDZp3SRu2KYrX7_JZHgdj4qw1-yCmFSfbA')
