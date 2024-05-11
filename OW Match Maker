@@ -1,0 +1,134 @@
+import discord
+from discord.ext import commands
+import random
+
+bot = commands.Bot(command_prefix='/')
+
+# Dictionary to store queued players and their roles
+queued_players = {}
+
+# Dictionary to store match details
+active_matches = {}
+
+# Dictionary to store default roles for users
+default_roles = {}
+
+@bot.event
+async def on_ready():
+    print(f'Logged in as {bot.user.name}')
+
+@bot.command()
+async def match(ctx, team_size: int = 6):
+    if len(queued_players) < team_size * 2:
+        await ctx.send("Not enough players in the queue to start a match.")
+        return
+
+    # Divide queued players into two teams
+    team1 = {}
+    team2 = {}
+
+    for i, (player_id, role) in enumerate(queued_players.items()):
+        if i < team_size:
+            team1[player_id] = role
+        else:
+            team2[player_id] = role
+
+    # Create a match and add it to active_matches
+    match_id = len(active_matches) + 1
+    active_matches[match_id] = {
+        'team1': team1,
+        'team2': team2,
+        'status': 'pending'
+    }
+
+    await ctx.send(f"Match {match_id} created. Team 1: {len(team1)} players, Team 2: {len(team2)} players.")
+
+@bot.command()
+async def start(ctx, match_id: int):
+    if match_id not in active_matches:
+        await ctx.send("Invalid match ID.")
+        return
+
+    match_details = active_matches[match_id]
+
+    if ctx.author.id not in match_details['team1'] and ctx.author.id not in match_details['team2']:
+        await ctx.send("You are not in this match.")
+        return
+
+    # Run a poll to check if everyone is ready
+    # For demonstration purpose, skipping the poll and assuming everyone is ready
+    # Replace with actual poll logic if desired
+
+    # Randomize a game mode
+    game_modes = ['Control', 'Escort', 'Hybrid', 'Push']
+    game_mode = random.choice(game_modes)
+
+    await ctx.send(f"Starting match {match_id}. Game mode: {game_mode}")
+
+    match_details['status'] = 'started'
+    match_details['game_mode'] = game_mode
+
+@bot.command()
+async def complete(ctx, match_id: int, side):
+    if match_id not in active_matches:
+        await ctx.send("Invalid match ID.")
+        return
+
+    match_details = active_matches[match_id]
+
+    # Check if the user is the lobby leader
+    # Replace '123456789' with the lobby leader's user ID
+    if ctx.author.id == 123456789:
+        # Code to complete the match and report back
+        await ctx.send(f'Match {match_id} completed! {side} team won!')
+        del active_matches[match_id]
+    else:
+        await ctx.send("You are not the lobby leader.")
+
+@bot.command()
+async def stop(ctx, match_id: int):
+    if match_id not in active_matches:
+        await ctx.send("Invalid match ID.")
+        return
+
+    match_details = active_matches[match_id]
+
+    # Check if the user is the lobby leader
+    # Replace '123456789' with the lobby leader's user ID
+    if ctx.author.id == 123456789:
+        # Code to abort the match
+        await ctx.send(f'Match {match_id} aborted.')
+        del active_matches[match_id]
+    else:
+        await ctx.send("You are not the lobby leader.")
+
+@bot.command()
+async def remove(ctx):
+    # Code to remove from queue or match
+    if ctx.author.id in queued_players:
+        del queued_players[ctx.author.id]
+        await ctx.send('Removed from queue or match.')
+    else:
+        await ctx.send('You are not in the queue.')
+
+@bot.command()
+async def queue(ctx, role='default'):
+    # Code to queue for a match with specified role
+    roles = ['main-tank', 'off-tank', 'dps', 'support', 'flex']
+    if role in roles or role == 'default':
+        queued_players[ctx.author.id] = role
+        await ctx.send(f'Queued as {role}.')
+    else:
+        await ctx.send('Invalid role. Please choose from main-tank, off-tank, dps, support, or flex.')
+
+@bot.command()
+async def default_role(ctx, role):
+    # Code to set default role for a user
+    roles = ['main-tank', 'off-tank', 'dps', 'support']
+    if role in roles:
+        default_roles[ctx.author.id] = role
+        await ctx.send(f'Default role set as {role}.')
+    else:
+        await ctx.send('Invalid role. Please choose from main-tank, off-tank, dps, or support.')
+
+bot.run('D')
